@@ -618,7 +618,26 @@ mark{background:var(--s5);color:var(--w);border-radius:2px;padding:0 1px}
 .empty{text-align:center;padding:60px 20px;color:var(--d4);font-size:12px}
 .empty-ic{font-size:36px;margin-bottom:12px;opacity:0.3}
 
+/* ── HAMBURGER & MOBILE NAV ──────────────────────────────── */
+.hamburger{display:none;background:none;border:none;color:var(--w);font-size:24px;cursor:pointer;margin-right:10px;padding:0;line-height:1}
+#mobile-nav{
+  position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.96);backdrop-filter:blur(10px);
+  display:none;flex-direction:column;padding:60px 24px 24px;overflow-y:auto;
+}
+#mobile-nav.open{display:flex;animation:fadeDown 0.2s ease}
+.mn-close{position:absolute;top:10px;right:20px;font-size:36px;color:var(--w);background:none;border:none;cursor:pointer;line-height:1;font-weight:300}
+.mn-title{font-size:11px;font-weight:600;color:var(--d5);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:20px}
+.mn-btn{
+  background:none;border:none;color:var(--d6);font-size:20px;font-weight:500;
+  text-align:left;padding:16px 0;border-bottom:1px solid var(--s3);
+  display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+  font-family:var(--sans);
+}
+.mn-btn.on{color:var(--w);font-weight:700}
+
 @media(max-width:760px){
+  .hamburger{display:block}
+  #tab-nav{display:none}
   .tb-btn span{display:none}
   .tb-btn{padding:8px 10px;font-size:16px}
   .tb-btn.prime{display:none!important}
@@ -678,6 +697,7 @@ mark{background:var(--s5);color:var(--w);border-radius:2px;padding:0 1px}
 <!-- ══════ TOPBAR ══════════════════════════════════════════ -->
 <nav id="topbar">
   <div class="logo">
+    <button class="hamburger" onclick="toggleMobileNav()">☰</button>
     <div class="logo-mark">EL</div>
     <div>
       <div class="logo-text">ExamLens Pro</div>
@@ -704,7 +724,7 @@ mark{background:var(--s5);color:var(--w);border-radius:2px;padding:0 1px}
     <div class="upload-icon-ring">📄</div>
     <div class="upload-title">Drop PDF papers here</div>
     <div class="upload-sub">Multiple files · Drag &amp; drop or click to browse<br/>Works with all formats & scanned PDFs</div>
-    <button class="btn btn-w" onclick="document.getElementById('file-input').click()">Choose Files</button>
+    <button class="btn btn-w">Choose Files</button>
     <input type="file" id="file-input" multiple accept=".pdf,application/pdf"/>
   </div>
 
@@ -1112,6 +1132,21 @@ mark{background:var(--s5);color:var(--w);border-radius:2px;padding:0 1px}
     </div>
     <div class="focus-hint">Use ← → keys to navigate · Esc to exit</div>
   </div>
+</div>
+
+<!-- ══════ MOBILE NAV ════════════════════════════════════════ -->
+<div id="mobile-nav">
+  <button class="mn-close" onclick="toggleMobileNav()">×</button>
+  <div class="mn-title">Menu</div>
+  <button class="mn-btn on" data-tab="overview" onclick="switchTab('overview');toggleMobileNav()">Overview</button>
+  <button class="mn-btn" data-tab="questions" onclick="switchTab('questions');toggleMobileNav()">Questions <span class="tb-cnt" id="mn-tc-q">0</span></button>
+  <button class="mn-btn" data-tab="topics" onclick="switchTab('topics');toggleMobileNav()">By Topic</button>
+  <button class="mn-btn" data-tab="heatmap" onclick="switchTab('heatmap');toggleMobileNav()">Heatmap</button>
+  <button class="mn-btn" data-tab="flashcards" onclick="switchTab('flashcards');toggleMobileNav()">Flashcards <span class="tb-cnt" id="mn-tc-fc">0</span></button>
+  <button class="mn-btn" data-tab="study" onclick="switchTab('study');toggleMobileNav()">Study <span class="tb-cnt" id="mn-tc-st">0/0</span></button>
+  <button class="mn-btn" data-tab="predictions" onclick="switchTab('predictions');toggleMobileNav()">Predictions</button>
+  <button class="mn-btn" data-tab="tools" onclick="switchTab('tools');toggleMobileNav()">Tools</button>
+  <button class="mn-btn" data-tab="cloud" onclick="switchTab('cloud');toggleMobileNav()">Word Cloud</button>
 </div>
 
 <!-- ══════ EXPORT BAR ═══════════════════════════════════════ -->
@@ -1599,6 +1634,9 @@ async function runAnalysis(){
   document.getElementById('s-topics').textContent=analysisResults.length;
   document.getElementById('s-max').textContent=analysisResults[0]?.count||0;
   document.getElementById('tc-q').textContent=analysisResults.length;
+  if(document.getElementById('mn-tc-q')) document.getElementById('mn-tc-q').textContent=analysisResults.length;
+  document.getElementById('tc-fc').textContent=[...bookmarks].length;
+  if(document.getElementById('mn-tc-fc')) document.getElementById('mn-tc-fc').textContent=[...bookmarks].length;
   document.getElementById('ov-meta').textContent=`${uploadedFiles.length} papers · ${rawCount} raw → ${analysisResults.length} unique`;
 
   buildFilterSidebar();
@@ -1635,6 +1673,7 @@ function updateStudyStats(){
   document.getElementById('s-studied').textContent=pct+'%';
   document.getElementById('global-prog-fill').style.width=pct+'%';
   document.getElementById('tc-st').textContent=`${done}/${total}`;
+  if(document.getElementById('mn-tc-st')) document.getElementById('mn-tc-st').textContent=`${done}/${total}`;
   document.getElementById('st-done').textContent=done;
   document.getElementById('st-total').textContent=total;
   document.getElementById('st-pct').textContent=pct+'%';
@@ -1851,6 +1890,7 @@ function toggleBookmark(id){
   saveBookmarks();
   document.querySelectorAll(`.bk-btn[data-qid="${id}"]`).forEach(el=>{el.classList.toggle('on',bookmarks.has(id));el.textContent=bookmarks.has(id)?'★':'☆'});
   document.getElementById('tc-fc').textContent=[...bookmarks].length;
+  if(document.getElementById('mn-tc-fc')) document.getElementById('mn-tc-fc').textContent=[...bookmarks].length;
   toast(bookmarks.has(id)?'Bookmarked':'Removed bookmark');
 }
 
@@ -2242,9 +2282,11 @@ function renderWordCloud(){
 // NAVIGATION
 // ════════════════════════════════════════════════════════════
 let activeTab='overview';
+function toggleMobileNav(){document.getElementById('mobile-nav')?.classList.toggle('open')}
 function switchTab(id){
   activeTab=id;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
+  document.querySelectorAll('.mn-btn').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
   document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='panel-'+id));
   if(id==='cloud')setTimeout(renderWordCloud,50);
   if(id==='overview')setTimeout(()=>{renderTopicChart();renderYearChart()},50);
